@@ -256,6 +256,15 @@
             font-size: 1.1rem;
         }
 
+        .ios-instructions {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
         /* Animations */
         @keyframes fadeIn {
             from {
@@ -405,6 +414,14 @@
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=silentgaminghub8@okicici&am=500&cu=INR&pn=SilentGamingHub" alt="QR Code">
                 </div>
                 <div class="upi-id">silentgaminghub8@okicici</div>
+                <div class="ios-instructions" id="iosQrInstructions" style="display: none;">
+                    <p><strong>For iOS users:</strong> Scan this QR code with your UPI app to pay ₹500.</p>
+                </div>
+            </div>
+            
+            <div class="ios-instructions" id="iosInstructions" style="display: none;">
+                <p><strong>For iOS users:</strong> Clicking the button below will try to open your UPI app. If it doesn't work, please manually open your UPI app and send ₹500 to:</p>
+                <div class="upi-id">silentgaminghub8@okicici</div>
             </div>
             
             <button class="proceed-pay-btn" id="proceedPayBtn">Proceed to Pay</button>
@@ -414,6 +431,19 @@
     <script>
         // Current selected payment method
         let selectedMethod = '';
+        
+        // Detect if user is on iOS
+        function isIOS() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform) || 
+            (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        }
         
         // Welcome popup functions
         function closeWelcome() {
@@ -429,10 +459,29 @@
             
             // Show QR code only for UPI Direct
             const qrSection = document.getElementById('qrCodeSection');
+            const iosInstructions = document.getElementById('iosInstructions');
+            const iosQrInstructions = document.getElementById('iosQrInstructions');
+            
             if (method === 'UPI Direct') {
                 qrSection.style.display = 'block';
+                iosInstructions.style.display = 'none';
+                
+                // Show iOS instructions for QR code
+                if (isIOS()) {
+                    iosQrInstructions.style.display = 'block';
+                } else {
+                    iosQrInstructions.style.display = 'none';
+                }
             } else {
                 qrSection.style.display = 'none';
+                iosQrInstructions.style.display = 'none';
+                
+                // Show iOS instructions for non-QR methods
+                if (isIOS()) {
+                    iosInstructions.style.display = 'block';
+                } else {
+                    iosInstructions.style.display = 'none';
+                }
             }
             
             // Update button action
@@ -446,14 +495,31 @@
             document.getElementById('paymentModal').style.display = 'none';
         }
         
-        // Payment redirection
+        // Payment redirection with iOS compatibility
         function proceedToPay(method) {
             if (method === 'UPI Direct') {
                 // For UPI Direct, we're already showing the QR code
                 closeModal();
             } else {
                 // For other methods, use the UPI deep link
-                window.location.href = 'upi://pay?pa=silentgaminghub8@okicici&am=500&cu=INR&pn=SilentGamingHub';
+                const upiLink = 'upi://pay?pa=silentgaminghub8@okicici&am=500&cu=INR&pn=SilentGamingHub';
+                
+                // For iOS, we need a different approach
+                if (isIOS()) {
+                    // Try to open the UPI app directly
+                    window.location.href = upiLink;
+                    
+                    // Fallback: If the app doesn't open, show instructions
+                    setTimeout(function() {
+                        if (!document.hidden) {
+                            // App didn't open, keep the modal open with instructions
+                            alert('If the UPI app did not open, please manually open your UPI app and send ₹500 to silentgaminghub8@okicici');
+                        }
+                    }, 1000);
+                } else {
+                    // For Android, directly open the UPI link
+                    window.location.href = upiLink;
+                }
             }
         }
         
