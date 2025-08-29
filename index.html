@@ -1,535 +1,533 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SG Hub Payment Page</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SG Hub Payment Page - Silent Gaming Hub</title>
+<style>
+  /* Reset and basic */
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0c111b;
+    color: #eee;
+    overflow-x: hidden;
+  }
 
-        body {
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            color: #fff;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            overflow-x: hidden;
-        }
+  /* Fade animations */
+  .fade-in {
+    animation: fadeIn 0.6s ease forwards;
+  }
+  .fade-out {
+    animation: fadeOut 0.5s ease forwards;
+  }
+  @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+  @keyframes fadeOut { from {opacity:1;} to {opacity:0;} }
 
-        .container {
-            max-width: 1000px;
-            width: 100%;
-            padding: 20px;
-        }
+  /* Welcome popup */
+  #welcomePopup {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #101522;
+    padding: 2.5rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 0 15px #0ef;
+    text-align: center;
+    max-width: 90vw;
+    width: 360px;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #welcomePopup.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #welcomePopup h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0ff;
+    text-shadow:
+      0 0 6px #0ff,
+      0 0 12px #0ff,
+      0 0 18px #0ff;
+    margin-bottom: 1.8rem;
+  }
+  #welcomePopup button {
+    cursor: pointer;
+    background: linear-gradient(135deg, #00ffd5, #008fb3);
+    border: none;
+    color: #001e22;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.75rem 1.8rem;
+    border-radius: 30px;
+    box-shadow:
+      0 0 10px #00ffd5,
+      inset 0 0 5px #00ffd5;
+    transition: all 0.3s ease;
+  }
+  #welcomePopup button:hover {
+    background: linear-gradient(135deg, #00b6a6, #004d50);
+    color: #c9fff6;
+    box-shadow: 0 0 20px #0ff;
+  }
 
-        /* Welcome Popup */
-        .welcome-popup {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            animation: fadeIn 0.8s ease-out;
-        }
+  /* Main page */
+  #mainPage {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    padding: 1rem 1rem 3rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #0c111b;
+    overflow-y: auto;
+  }
+  #mainPage.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
 
-        .welcome-content {
-            background: linear-gradient(145deg, #1a1a2e, #16213e);
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
-            box-shadow: 0 0 50px rgba(92, 92, 224, 0.6);
-            animation: scaleIn 0.8s ease-out;
-            max-width: 500px;
-            width: 90%;
-            border: 2px solid #4cc9f0;
-        }
+  /* Glowing headline */
+  h1.main-title {
+    font-size: 2.6rem;
+    font-weight: 900;
+    color: #0ff;
+    margin: 2rem 0 3rem;
+    text-align: center;
+    text-shadow:
+      0 0 4px #0ff,
+      0 0 10px #0ff,
+      0 0 18px #0ff,
+      0 0 30px #05f;
+    user-select: none;
+  }
 
-        .welcome-title {
-            font-size: 2.2rem;
-            margin-bottom: 20px;
-            color: #fff;
-            text-shadow: 0 0 15px #4cc9f0;
-        }
+  /* Payment cards container */
+  .payment-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(160px,1fr));
+    gap: 1.8rem;
+    flex-grow: 1;
+    width: 100%;
+    max-width: 900px;
+  }
 
-        .proceed-btn {
-            background: linear-gradient(145deg, #4361ee, #3a0ca3);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.2rem;
-            border-radius: 50px;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
-        }
+  /* Individual card */
+  .payment-card {
+    background: linear-gradient(145deg, #131a29, #0a101c);
+    border-radius: 15px;
+    box-shadow:
+      0 4px 16px rgba(0,255,255,0.15),
+      inset 0 0 10px rgba(0,255,255,0.1);
+    border: 2px solid transparent;
+    padding: 1.2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition:
+      box-shadow 0.3s ease,
+      transform 0.3s ease,
+      border-color 0.3s ease;
+    user-select: none;
+  }
+  .payment-card:hover, .payment-card:focus {
+    border-color: #0ff;
+    box-shadow:
+      0 0 18px #0ff,
+      inset 0 0 18px #0ff;
+    transform: scale(1.05);
+    outline: none;
+    z-index: 10;
+  }
 
-        .proceed-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.6);
-        }
+  .payment-card:focus-visible {
+    outline: 2px solid #0ff;
+    outline-offset: 3px;
+  }
 
-        /* Main Content */
-        .main-content {
-            display: none;
-            animation: fadeIn 1s ease-out;
-        }
+  /* Payment card icon stylized */
+  .payment-icon {
+    height: 72px;
+    width: 72px;
+    margin: auto;
+    margin-bottom: 0.8rem;
+    border-radius: 50%;
+    background: #011521;
+    box-shadow:
+      0 0 6px #00f,
+      inset 0 0 8px #0ff;
+    color: #0ff;
+    font-weight: 900;
+    font-size: 2.8rem;
+    line-height: 72px;
+    user-select: none;
+  }
 
-        .headline {
-            text-align: center;
-            font-size: 2.8rem;
-            margin: 20px 0 40px;
-            color: #fff;
-            text-shadow: 0 0 20px #4cc9f0, 0 0 30px #4cc9f0;
-            animation: pulse 2s infinite;
-        }
+  /* Payment names */
+  .payment-card h3 {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #0ff;
+    margin: 0;
+    user-select: none;
+  }
 
-        .payment-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
-        }
+  /* Payment modal backdrop */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(7px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+    z-index: 1200;
+  }
+  .modal-backdrop.visible {
+    visibility: visible;
+    opacity: 1;
+  }
 
-        .payment-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(76, 201, 240, 0.3);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
+  /* Modal content */
+  .modal-content {
+    background: #111922;
+    border-radius: 15px;
+    padding: 2rem 2.5rem;
+    max-width: 400px;
+    width: 90vw;
+    text-align: center;
+    box-shadow:
+      0 0 20px #0ff,
+      inset 0 0 12px #03c;
+    color: #0ff;
+    position: relative;
+    user-select: none;
+  }
 
-        .payment-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-            border-color: #4cc9f0;
-            background: rgba(255, 255, 255, 0.15);
-        }
+  /* Modal headline */
+  .modal-content h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 1.2rem;
+  }
 
-        .payment-icon {
-            font-size: 3.5rem;
-            margin-bottom: 15px;
-        }
+  /* Price breakdown list */
+  .price-breakdown {
+    font-size: 1.1rem;
+    color: #a0dede;
+    margin-bottom: 1.6rem;
+    user-select: text;
+  }
+  .price-breakdown div {
+    margin: 0.35rem 0;
+    display: flex;
+    justify-content: space-between;
+  }
+  .price-breakdown .final {
+    font-weight: 700;
+    border-top: 1.5px solid #0ff;
+    padding-top: 0.6rem;
+    color: #00ffffcc;
+  }
 
-        .payment-name {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
+  /* Proceed button modal */
+  #proceedToPayBtn {
+    background: linear-gradient(135deg, #00ffe1, #006d70);
+    color: #001314;
+    padding: 0.75rem 2.2rem;
+    border-radius: 40px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border: none;
+    cursor: pointer;
+    box-shadow:
+      0 0 15px #00ffe1,
+      inset 0 0 10px #00c7a4;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
+  }
+  #proceedToPayBtn:hover {
+    background: linear-gradient(135deg, #008575, #00ffd4);
+    box-shadow: 0 0 24px #00fff3, inset 0 0 18px #00ddc4;
+  }
 
-        .payment-desc {
-            color: #a0a0ec;
-            font-size: 0.9rem;
-        }
+  /* Close button */
+  #closeModal {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 1.6rem;
+    color: #0ff;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.25s ease;
+  }
+  #closeModal:hover {
+    color: #00fff3;
+  }
 
-        /* Payment Modal */
-        .payment-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1001;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.5s ease-out;
-        }
+  /* QR Code container for UPI Direct */
+  #qrCodeContainer {
+    margin-top: 1.2rem;
+  }
 
-        .modal-content {
-            background: linear-gradient(145deg, #1a1a2e, #16213e);
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 0 50px rgba(76, 201, 240, 0.7);
-            max-width: 500px;
-            width: 90%;
-            border: 2px solid #4cc9f0;
-            animation: scaleIn 0.5s ease-out;
-            position: relative;
-        }
+  /* Ripple effect for buttons */
+  button.ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  button.ripple span.ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: rippleAnimation 600ms linear;
+    background-color: rgba(0, 255, 255, 0.4);
+    pointer-events: none;
+  }
+  @keyframes rippleAnimation {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
 
-        .close-modal {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 1.5rem;
-            color: #f72585;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .close-modal:hover {
-            transform: rotate(90deg);
-        }
-
-        .modal-title {
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-            color: #4cc9f0;
-        }
-
-        .breakdown {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: left;
-        }
-
-        .breakdown-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 12px 0;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .breakdown-total {
-            font-weight: bold;
-            color: #4cc9f0;
-            font-size: 1.2rem;
-            border-bottom: none;
-            padding-top: 10px;
-        }
-
-        .proceed-pay-btn {
-            background: linear-gradient(145deg, #4361ee, #3a0ca3);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.1rem;
-            border-radius: 50px;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
-        }
-
-        .proceed-pay-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.6);
-        }
-
-        .qr-code {
-            width: 200px;
-            height: 200px;
-            margin: 20px auto;
-            background: #fff;
-            border-radius: 10px;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .qr-code img {
-            max-width: 100%;
-            max-height: 100%;
-        }
-
-        .upi-id {
-            margin: 15px 0;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 1.1rem;
-        }
-
-        .ios-instructions {
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            font-size: 0.9rem;
-            text-align: left;
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes scaleIn {
-            from {
-                transform: scale(0.8);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                text-shadow: 0 0 20px #4cc9f0, 0 0 30px #4cc9f0;
-            }
-            50% {
-                transform: scale(1.05);
-                text-shadow: 0 0 25px #4cc9f0, 0 0 40px #4cc9f0;
-            }
-            100% {
-                transform: scale(1);
-                text-shadow: 0 0 20px #4cc9f0, 0 0 30px #4cc9f0;
-            }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .headline {
-                font-size: 2rem;
-            }
-            
-            .welcome-title {
-                font-size: 1.8rem;
-            }
-            
-            .payment-options {
-                grid-template-columns: 1fr;
-            }
-            
-            .payment-card {
-                padding: 20px;
-            }
-            
-            .payment-icon {
-                font-size: 2.8rem;
-            }
-        }
-    </style>
+  /* Responsive text scaling */
+  @media (max-width: 500px) {
+    h1.main-title {
+      font-size: 2.1rem;
+      margin-bottom: 2rem;
+    }
+    #welcomePopup {
+      width: 90vw;
+    }
+  }
+</style>
 </head>
 <body>
-    <!-- Welcome Popup -->
-    <div class="welcome-popup" id="welcomePopup">
-        <div class="welcome-content">
-            <h1 class="welcome-title">Welcome to Silent Gaming Hub Payment Zone</h1>
-            <p>Unlock premium gaming experience with our ₹500 subscription</p>
-            <button class="proceed-btn" onclick="closeWelcome()">Proceed</button>
-        </div>
-    </div>
 
-    <!-- Main Content -->
-    <div class="container">
-        <div class="main-content" id="mainContent">
-            <h1 class="headline">SG Hub Payment Page</h1>
-            
-            <div class="payment-options">
-                <div class="payment-card" onclick="openModal('Google Pay')">
-                    <div class="payment-icon" style="color: #4285F4;">
-                        <i class="fab fa-google"></i>
-                    </div>
-                    <h3 class="payment-name">Google Pay</h3>
-                    <p class="payment-desc">Fast and secure payments</p>
-                </div>
-                
-                <div class="payment-card" onclick="openModal('PhonePe')">
-                    <div class="payment-icon" style="color: #673AB7;">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <h3 class="payment-name">PhonePe</h3>
-                    <p class="payment-desc">India's popular UPI app</p>
-                </div>
-                
-                <div class="payment-card" onclick="openModal('Paytm')">
-                    <div class="payment-icon" style="color: #002970;">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <h3 class="payment-name">Paytm</h3>
-                    <p class="payment-desc">Pay with Paytm wallet</p>
-                </div>
-                
-                <div class="payment-card" onclick="openModal('Amazon Pay')">
-                    <div class="payment-icon" style="color: #FF9900;">
-                        <i class="fab fa-amazon"></i>
-                    </div>
-                    <h3 class="payment-name">Amazon Pay</h3>
-                    <p class="payment-desc">Amazon's payment solution</p>
-                </div>
-                
-                <div class="payment-card" onclick="openModal('UPI Direct')">
-                    <div class="payment-icon" style="color: #00AFF0;">
-                        <i class="fas fa-qrcode"></i>
-                    </div>
-                    <h3 class="payment-name">UPI Direct</h3>
-                    <p class="payment-desc">Direct UPI transfer</p>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Welcome Popup -->
+<div id="welcomePopup" class="fade-in" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <h2 id="welcomeTitle">Welcome to Silent Gaming Hub Payment Zone</h2>
+  <button id="proceedBtn" class="ripple" aria-label="Proceed to payment page">Proceed</button>
+</div>
 
-    <!-- Payment Modal -->
-    <div class="payment-modal" id="paymentModal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h2 class="modal-title" id="modalTitle">Payment Method</h2>
-            
-            <div class="breakdown">
-                <div class="breakdown-row">
-                    <span>Base Price:</span>
-                    <span>₹470</span>
-                </div>
-                <div class="breakdown-row">
-                    <span>GST (18%):</span>
-                    <span>₹30</span>
-                </div>
-                <div class="breakdown-row">
-                    <span>Other Charges:</span>
-                    <span>₹0</span>
-                </div>
-                <div class="breakdown-row breakdown-total">
-                    <span>Final Price:</span>
-                    <span>₹500</span>
-                </div>
-            </div>
-            
-            <div id="qrCodeSection" style="display: none;">
-                <div class="qr-code">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=silentgaminghub8@okicici&am=500&cu=INR&pn=SilentGamingHub" alt="QR Code">
-                </div>
-                <div class="upi-id">silentgaminghub8@okicici</div>
-                <div class="ios-instructions" id="iosQrInstructions" style="display: none;">
-                    <p><strong>For iOS users:</strong> Scan this QR code with your UPI app to pay ₹500.</p>
-                </div>
-            </div>
-            
-            <div class="ios-instructions" id="iosInstructions" style="display: none;">
-                <p><strong>For iOS users:</strong> Clicking the button below will try to open your UPI app. If it doesn't work, please manually open your UPI app and send ₹500 to:</p>
-                <div class="upi-id">silentgaminghub8@okicici</div>
-            </div>
-            
-            <button class="proceed-pay-btn" id="proceedPayBtn">Proceed to Pay</button>
-        </div>
+<!-- Main Page -->
+<div id="mainPage" aria-hidden="true" tabindex="-1">
+  <h1 class="main-title" aria-label="SG Hub Payment Page">SG Hub Payment Page</h1>
+  <main class="payment-options" role="list" aria-label="Payment Options">
+    <div class="payment-card" tabindex="0" role="listitem" data-method="googlepay" aria-describedby="desc-googlepay">
+      <div class="payment-icon" aria-hidden="true" title="Google Pay Logo">G</div>
+      <h3 id="desc-googlepay">Google Pay</h3>
     </div>
+    <div class="payment-card" tabindex="0" role="listitem" data-method="phonepe" aria-describedby="desc-phonepe">
+      <div class="payment-icon" aria-hidden="true" title="PhonePe Logo">P</div>
+      <h3 id="desc-phonepe">PhonePe</h3>
+    </div>
+    <div class="payment-card" tabindex="0" role="listitem" data-method="paytm" aria-describedby="desc-paytm">
+      <div class="payment-icon" aria-hidden="true" title="Paytm Logo">T</div>
+      <h3 id="desc-paytm">Paytm</h3>
+    </div>
+    <div class="payment-card" tabindex="0" role="listitem" data-method="amazonpay" aria-describedby="desc-amazonpay">
+      <div class="payment-icon" aria-hidden="true" title="Amazon Pay Logo">A</div>
+      <h3 id="desc-amazonpay">Amazon Pay</h3>
+    </div>
+    <div class="payment-card" tabindex="0" role="listitem" data-method="upidirect" aria-describedby="desc-upidirect">
+      <div class="payment-icon" aria-hidden="true" title="UPI Direct">U</div>
+      <h3 id="desc-upidirect">UPI Direct</h3>
+    </div>
+  </main>
+</div>
 
-    <script>
-        // Current selected payment method
-        let selectedMethod = '';
-        
-        // Detect if user is on iOS
-        function isIOS() {
-            return [
-                'iPad Simulator',
-                'iPhone Simulator',
-                'iPod Simulator',
-                'iPad',
-                'iPhone',
-                'iPod'
-            ].includes(navigator.platform) || 
-            (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+<!-- Payment Modal -->
+<div id="paymentModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle" tabindex="-1" aria-hidden="true">
+  <div class="modal-content" role="document">
+    <button id="closeModal" aria-label="Close payment modal">&times;</button>
+    <h2 id="modalTitle">Payment Breakdown</h2>
+    <div class="price-breakdown" aria-live="polite">
+      <div><span>Base Price:</span> <span>₹470</span></div>
+      <div><span>GST (18%):</span> <span>₹30</span></div>
+      <div><span>Other Charges:</span> <span>₹0</span></div>
+      <div class="final"><span>Final Price:</span> <span>₹500</span></div>
+    </div>
+    <button id="proceedToPayBtn" class="ripple">Proceed to Pay</button>
+
+    <!-- QR Code container, hidden by default -->
+    <div id="qrCodeContainer" aria-label="UPI Payment QR Code" style="margin-top:1rem;"></div>
+  </div>
+</div>
+
+<!-- QRCode library for generating QR -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+  (() => {
+    const welcomePopup = document.getElementById('welcomePopup');
+    const proceedBtn = document.getElementById('proceedBtn');
+    const mainPage = document.getElementById('mainPage');
+    const paymentModal = document.getElementById('paymentModal');
+    const closeModal = document.getElementById('closeModal');
+    const proceedToPayBtn = document.getElementById('proceedToPayBtn');
+    const qrCodeContainer = document.getElementById('qrCodeContainer');
+    const paymentCards = [...document.querySelectorAll('.payment-card')];
+
+    const paymentData = {
+      basePrice: 470,
+      gst: 30,
+      otherCharges: 0,
+      finalPrice: 500,
+      upiId: "silentgaminghub8@okicici",
+      merchantName: "SilentGamingHub",
+      currency: "INR"
+    };
+    const upiLink = `upi://pay?pa=${paymentData.upiId}&am=${paymentData.finalPrice}&cu=INR&pn=${paymentData.merchantName}`;
+
+    let selectedPaymentMethod = null;
+
+    // Utility to add ripple effect on buttons
+    function addRippleEffect(e) {
+      const button = e.currentTarget;
+      const circle = document.createElement('span');
+      circle.classList.add('ripple-effect');
+      button.appendChild(circle);
+      const d = Math.max(button.clientWidth, button.clientHeight);
+      circle.style.width = circle.style.height = d + 'px';
+      const rect = button.getBoundingClientRect();
+      circle.style.left = e.clientX - rect.left - d / 2 + 'px';
+      circle.style.top = e.clientY - rect.top - d / 2 + 'px';
+
+      circle.addEventListener('animationend', () => {
+        circle.remove();
+      });
+    }
+
+    // Show and hide welcome popup
+    function showWelcomePopup() {
+      welcomePopup.classList.add('show');
+      welcomePopup.setAttribute('aria-hidden', 'false');
+      mainPage.setAttribute('aria-hidden', 'true');
+      mainPage.classList.remove('visible');
+      mainPage.style.pointerEvents = 'none';
+    }
+    function hideWelcomePopup() {
+      welcomePopup.classList.remove('show');
+      welcomePopup.classList.add('fade-out');
+      welcomePopup.setAttribute('aria-hidden', 'true');
+      setTimeout(() => {
+        welcomePopup.remove();
+        mainPage.classList.add('visible');
+        mainPage.style.pointerEvents = 'auto';
+        mainPage.focus();
+        mainPage.setAttribute('aria-hidden', 'false');
+      }, 500);
+    }
+
+    // Show payment modal
+    function showPaymentModal() {
+      paymentModal.classList.add('visible');
+      paymentModal.setAttribute('aria-hidden', 'false');
+      paymentModal.focus();
+    }
+    // Hide payment modal
+    function hidePaymentModal() {
+      paymentModal.classList.remove('visible');
+      paymentModal.setAttribute('aria-hidden', 'true');
+      qrCodeContainer.innerHTML = '';  // clear QR code if any
+    }
+
+    // Trigger payment modal with selected method
+    function handlePaymentSelection(card) {
+      selectedPaymentMethod = card.getAttribute('data-method');
+      // Clear QR container always
+      qrCodeContainer.innerHTML = '';
+      // Show or hide QR for UPI Direct
+      if (selectedPaymentMethod === 'upidirect') {
+        generateQRCode();
+        proceedToPayBtn.textContent = 'Close';
+      } else {
+        proceedToPayBtn.textContent = 'Proceed to Pay';
+      }
+      showPaymentModal();
+    }
+
+    // Generate QR code for UPI
+    function generateQRCode() {
+      const upiURL = `upi://pay?pa=${paymentData.upiId}&am=${paymentData.finalPrice}&cu=${paymentData.currency}&pn=${paymentData.merchantName}`;
+      QRCode.toCanvas(upiURL, { width: 180, color: { dark: '#00ffff', light: '#0a111a' } }, (err, canvas) => {
+        if (err) {
+          qrCodeContainer.textContent = "Error generating QR code";
+          return;
         }
-        
-        // Welcome popup functions
-        function closeWelcome() {
-            document.getElementById('welcomePopup').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
+        qrCodeContainer.appendChild(canvas);
+      });
+    }
+
+    // Open UPI link or close modal for UPI Direct
+    function handleProceedToPay() {
+      if (!selectedPaymentMethod) return;
+
+      if (selectedPaymentMethod === 'upidirect') {
+        // Just close modal after viewing QR
+        hidePaymentModal();
+      } else {
+        // Open UPI deep link
+        window.location.href = upiLink;
+        // Note: on iOS and many supported Android browsers, this should open the payment app automatically
+      }
+    }
+
+    // Bind events
+    proceedBtn.addEventListener('click', (e) => {
+      addRippleEffect(e);
+      hideWelcomePopup();
+    });
+
+    paymentCards.forEach(card => {
+      card.addEventListener('click', (e) => handlePaymentSelection(card));
+      card.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handlePaymentSelection(card);
         }
-        
-        // Modal functions
-        function openModal(method) {
-            selectedMethod = method;
-            document.getElementById('modalTitle').textContent = `Pay with ${method}`;
-            document.getElementById('paymentModal').style.display = 'flex';
-            
-            // Show QR code only for UPI Direct
-            const qrSection = document.getElementById('qrCodeSection');
-            const iosInstructions = document.getElementById('iosInstructions');
-            const iosQrInstructions = document.getElementById('iosQrInstructions');
-            
-            if (method === 'UPI Direct') {
-                qrSection.style.display = 'block';
-                iosInstructions.style.display = 'none';
-                
-                // Show iOS instructions for QR code
-                if (isIOS()) {
-                    iosQrInstructions.style.display = 'block';
-                } else {
-                    iosQrInstructions.style.display = 'none';
-                }
-            } else {
-                qrSection.style.display = 'none';
-                iosQrInstructions.style.display = 'none';
-                
-                // Show iOS instructions for non-QR methods
-                if (isIOS()) {
-                    iosInstructions.style.display = 'block';
-                } else {
-                    iosInstructions.style.display = 'none';
-                }
-            }
-            
-            // Update button action
-            const payBtn = document.getElementById('proceedPayBtn');
-            payBtn.onclick = function() {
-                proceedToPay(method);
-            };
+      });
+    });
+
+    closeModal.addEventListener('click', () => hidePaymentModal());
+
+    proceedToPayBtn.addEventListener('click', (e) => {
+      addRippleEffect(e);
+      handleProceedToPay();
+    });
+
+    paymentModal.addEventListener('click', (e) => {
+      if (e.target === paymentModal) {
+        hidePaymentModal();
+      }
+    });
+
+    // Escape key closes modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (paymentModal.classList.contains('visible')) {
+          hidePaymentModal();
         }
-        
-        function closeModal() {
-            document.getElementById('paymentModal').style.display = 'none';
-        }
-        
-        // Payment redirection with iOS compatibility
-        function proceedToPay(method) {
-            if (method === 'UPI Direct') {
-                // For UPI Direct, we're already showing the QR code
-                closeModal();
-            } else {
-                // For other methods, use the UPI deep link
-                const upiLink = 'upi://pay?pa=silentgaminghub8@okicici&am=500&cu=INR&pn=SilentGamingHub';
-                
-                // For iOS, we need a different approach
-                if (isIOS()) {
-                    // Try to open the UPI app directly
-                    window.location.href = upiLink;
-                    
-                    // Fallback: If the app doesn't open, show instructions
-                    setTimeout(function() {
-                        if (!document.hidden) {
-                            // App didn't open, keep the modal open with instructions
-                            alert('If the UPI app did not open, please manually open your UPI app and send ₹500 to silentgaminghub8@okicici');
-                        }
-                    }, 1000);
-                } else {
-                    // For Android, directly open the UPI link
-                    window.location.href = upiLink;
-                }
-            }
-        }
-        
-        // Close modal if clicked outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('paymentModal');
-            if (event.target === modal) {
-                closeModal();
-            }
-        }
-    </script>
+      }
+    });
+
+    // Show welcome popup initially
+    showWelcomePopup();
+  })();
+</script>
 </body>
 </html>
