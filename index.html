@@ -467,8 +467,9 @@
             const loginBtn = document.getElementById('login-btn');
             const logoutBtn = document.getElementById('logout-btn');
             
-            // API URL - Your Google Apps Script Web App URL
-            const API_URL = 'https://script.google.com/macros/s/AKfycbwZ7KP2O_P9UJQ1S85yIi16JWQDZQi7cPZ8Auiad86iZE9s8dGbfYJT6LZOqkk2ErH_/exec';
+            // API URL - Using your Google Apps Script ID
+            const SCRIPT_ID = '19t2xF2yZqlM4QWu1vrlcPPs86zvBYnemLgq7EvweLjh_ibZs367MHX84';
+            const API_URL = `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
             
             // Check if user is already logged in
             checkExistingLogin();
