@@ -116,6 +116,7 @@
             transition: all 0.3s ease;
             transform: translateZ(0);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
         }
 
         .btn:hover {
@@ -126,6 +127,24 @@
         .btn:active {
             transform: translateY(1px) translateZ(0);
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn.loading {
+            color: transparent;
+        }
+
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 3px solid rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--deepblack);
+            animation: spin 1s ease-in-out infinite;
         }
 
         .error-message {
@@ -313,6 +332,10 @@
             100% { background-position: 0% 50%; }
         }
 
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .data-boxes {
@@ -349,6 +372,24 @@
             background-color: rgba(231, 76, 60, 0.8);
             color: white;
         }
+
+        /* Logout Button */
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid var(--darkgold);
+            color: var(--gold);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(212, 175, 55, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -368,13 +409,14 @@
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required>
                 </div>
-                <button type="submit" class="btn">LOGIN</button>
+                <button type="submit" class="btn" id="login-btn">LOGIN</button>
                 <div id="error-message" class="error-message"></div>
             </form>
         </div>
 
         <!-- Dashboard (Initially Hidden) -->
         <div id="dashboard">
+            <button class="logout-btn" id="logout-btn">Logout</button>
             <div class="sticky-header">
                 <h1>SILENT GAMING HUB</h1>
             </div>
@@ -422,9 +464,14 @@
             const usernameDisplay = document.getElementById('username-display');
             const userSpan = document.getElementById('user-span');
             const connectionStatus = document.getElementById('connection-status');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
             
-            // API URL - REPLACE WITH YOUR GOOGLE SCRIPT URL
+            // API URL - Your Google Apps Script Web App URL
             const API_URL = 'https://script.google.com/macros/s/AKfycbwZ7KP2O_P9UJQ1S85yIi16JWQDZQi7cPZ8Auiad86iZE9s8dGbfYJT6LZOqkk2ErH_/exec';
+            
+            // Check if user is already logged in
+            checkExistingLogin();
             
             // Show connection status
             function showStatus(message, isError = false) {
@@ -439,6 +486,43 @@
                 }, 5000);
             }
             
+            // Set loading state
+            function setLoading(isLoading) {
+                if (isLoading) {
+                    loginBtn.classList.add('loading');
+                    loginBtn.disabled = true;
+                } else {
+                    loginBtn.classList.remove('loading');
+                    loginBtn.disabled = false;
+                }
+            }
+            
+            // Check if user is already logged in (from sessionStorage)
+            function checkExistingLogin() {
+                const userData = sessionStorage.getItem('userData');
+                if (userData) {
+                    try {
+                        const data = JSON.parse(userData);
+                        loginContainer.style.display = 'none';
+                        dashboard.style.display = 'block';
+                        updateDashboard(data);
+                    } catch (e) {
+                        sessionStorage.removeItem('userData');
+                        console.error('Error parsing saved user data:', e);
+                    }
+                }
+            }
+            
+            // Update dashboard with user data
+            function updateDashboard(data) {
+                userSpan.textContent = data.username;
+                document.getElementById('reffer-code').textContent = data.reffer_code;
+                document.getElementById('reffer-count').textContent = data.numbers_of_reffer;
+                document.getElementById('reffer-amount').textContent = "$" + data.current_earnings_of_reffer;
+                document.getElementById('tournament-earning').textContent = "$" + data.tournament_earning;
+                document.getElementById('special-desc').textContent = data.special_description;
+            }
+            
             // Login form submission
             loginForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -448,6 +532,7 @@
                 
                 // Reset error message
                 errorMessage.style.display = 'none';
+                setLoading(true);
                 
                 try {
                     showStatus('Connecting to server...');
@@ -474,15 +559,12 @@
                         // Successful login
                         loginContainer.style.display = 'none';
                         dashboard.style.display = 'block';
-                        userSpan.textContent = username;
                         
-                        // In a real scenario, you would use data from the API response
-                        // For now, we'll use placeholder data
-                        document.getElementById('reffer-code').textContent = "GC-" + Math.floor(Math.random() * 10000);
-                        document.getElementById('reffer-count').textContent = Math.floor(Math.random() * 50);
-                        document.getElementById('reffer-amount').textContent = "$" + (Math.random() * 1000).toFixed(2);
-                        document.getElementById('tournament-earning').textContent = "$" + (Math.random() * 500).toFixed(2);
-                        document.getElementById('special-desc').textContent = "Welcome to Silent Gaming Hub Premium. You have exclusive access to tournaments, premium content, and special rewards. Invite friends to earn more rewards!";
+                        // Save user data to sessionStorage
+                        sessionStorage.setItem('userData', JSON.stringify(data.data));
+                        
+                        // Update dashboard with actual data
+                        updateDashboard(data.data);
                     } else {
                         // Login failed
                         showStatus('Login failed: ' + data.message, true);
@@ -494,7 +576,18 @@
                     errorMessage.textContent = 'Network error. Please check your connection and try again.';
                     errorMessage.style.display = 'block';
                     console.error('Login error:', error);
+                } finally {
+                    setLoading(false);
                 }
+            });
+            
+            // Logout functionality
+            logoutBtn.addEventListener('click', function() {
+                sessionStorage.removeItem('userData');
+                dashboard.style.display = 'none';
+                loginContainer.style.display = 'block';
+                loginForm.reset();
+                showStatus('Logged out successfully');
             });
             
             // Username click animation
